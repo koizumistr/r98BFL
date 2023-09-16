@@ -19,6 +19,7 @@ end
 
 
 #p ARGV
+scale = 2
 
 base = File.basename(ARGV[0], '.*')
 dir = File.dirname(ARGV[0])
@@ -37,8 +38,8 @@ g1 = betaopen(filename, 'g1', 'G1')
 b1 = betaopen(filename, 'b1', 'B1')
 e1 = betaopen(filename, 'e1', 'E1')
 
-data = Numo::UInt8.zeros(400, 640, 3)
-data.reshape!(400 * 640, 3)
+orig_data = Numo::UInt8.zeros(400, 640, 3)
+orig_data.reshape!(400 * 640, 3)
 #p data
 
 (0..(32000 - 1)).each do |i|
@@ -48,17 +49,36 @@ data.reshape!(400 * 640, 3)
   eb = e1.readbyte
   7.downto(0) do |j|
     0.upto(2) do |k|
-      data[i * 8 + 7 - j, k] = @gpal[eb[j] << 3 | gb[j] << 2 | rb[j] << 1 | bb[j], k]
+      orig_data[i * 8 + 7 - j, k] = @gpal[eb[j] << 3 | gb[j] << 2 | rb[j] << 1 | bb[j], k]
     end
   end
 end
 
 window = Gtk::Window.new
-window.set_size_request(650, 410)
+window.set_size_request(640 * scale + 10, 400 * scale + 10)
 
 image = Gtk::Image.new
 
-pixbuf = GdkPixbuf::Pixbuf.new(data: data.to_string, width: 640, height: 400, has_alpha: false)
+if scale == 1
+  data = orig_data
+else
+  orig_data.reshape!(400, 640, 3)
+  data = Numo::UInt8.zeros(400 * scale, 640 * scale, 3)
+  0.upto(640 - 1) do |i|
+    0.upto(400 - 1) do |j|
+      0.upto(2) do |k|
+        0.upto(scale - 1) do |m|
+          0.upto(scale - 1) do |n|
+            data[j * scale + m, i * scale + n, k] = orig_data[j, i, k]
+          end
+        end
+      end
+    end
+  end
+  data.reshape!(400 * 640 * scale * scale, 3)
+end
+
+pixbuf = GdkPixbuf::Pixbuf.new(data: data.to_string, width: 640 * scale, height: 400 * scale, has_alpha: false)
 image.pixbuf = pixbuf
 
 fixed = Gtk::Fixed.new

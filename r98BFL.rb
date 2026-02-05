@@ -62,20 +62,9 @@ image = Gtk::Image.new
 if scale == 1
   data = orig_data
 else
-  orig_data.reshape!(400, 640, 3)
-  data = Numo::UInt8.zeros(400 * scale, 640 * scale, 3)
-  0.upto(640 - 1) do |i|
-    0.upto(400 - 1) do |j|
-      0.upto(2) do |k|
-        0.upto(scale - 1) do |m|
-          0.upto(scale - 1) do |n|
-            data[j * scale + m, i * scale + n, k] = orig_data[j, i, k]
-          end
-        end
-      end
-    end
-  end
-  data.reshape!(400 * 640 * scale * scale, 3)
+  data = Numo::UInt8.zeros(400, scale, 640, scale, 3)
+  data[] = orig_data.reshape!(400, 1, 640, 1, 3)
+  data.reshape!(400 * scale * 640 * scale, 3)
 end
 
 pixbuf = GdkPixbuf::Pixbuf.new(data: data.to_string, width: 640 * scale, height: 400 * scale, has_alpha: false)

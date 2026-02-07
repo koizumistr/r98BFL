@@ -48,8 +48,9 @@ orig_data.reshape!(400 * 640, 3)
   bb = b1.readbyte
   eb = e1.readbyte
   7.downto(0) do |j|
+    color_idx = eb[j] << 3 | gb[j] << 2 | rb[j] << 1 | bb[j]
     0.upto(2) do |k|
-      orig_data[i * 8 + 7 - j, k] = @gpal[eb[j] << 3 | gb[j] << 2 | rb[j] << 1 | bb[j], k]
+      orig_data[i * 8 + 7 - j, k] = @gpal[color_idx, k]
     end
   end
 end

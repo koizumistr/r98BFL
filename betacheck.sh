@@ -5,10 +5,15 @@ if [ $# -lt 1 ]; then
     exit
 fi
 
-temp_beta=$(mktemp /tmp/beta_XXXXXX) || exit 1
-temp_pal=$(mktemp /tmp/pal_XXXXXX) || exit 1
-head -c 32000 /dev/zero > $temp_beta
-head -c 48 /dev/zero > $temp_pal
+is_not_zero() {
+    local file="$1"
+    local size="$2"
+
+    if ! cmp -s -n "$size" "$file" /dev/zero; then
+	return 0
+    fi
+    return 1
+}
 
 fname=$(basename $1)
 stem=${fname%.*}
@@ -18,37 +23,38 @@ pdif=0
 bdif=0
 # .r1, .g1, .b1, .e1 files
 for file in ${fullpath}.[RrGgBbEe]1; do
-    diff -s $file $temp_beta > /dev/null
-    case $? in
-	0)
-	    echo "same" > /dev/null ;;
-	1)
-	    echo "differ" > /dev/null ; bdif=1 ;;
-	*)
-	    echo "error" ;;
-    esac
+    if is_not_zero "$file" 32000; then
+	bdif=1
+	break
+    fi
 done
 
 # .rgb file
 for file in ${fullpath}.[rR][gG][bB]; do
-    diff -s $file $temp_pal > /dev/null
-    case $? in
-	0)
-	    echo "same" > /dev/null ;;
-	1)
-	    echo "differ" > /dev/null ; pdif=1 ;;
-	*)
-	    echo "error" ;;
-    esac
+    if is_not_zero "$file" 48; then
+	pdif=1
+	break
+    fi
 done
 
 case "${bdif}${pdif}" in
-    "00") msg="まっくろ" ;;           #  black
-    "01") msg="palのみ設定されている" ;; #  only palette set
-    "10") msg="palが設定されてない" ;; #  palette not set
-    "11") msg="何か描かれている" ;;   # something painted
+    "00")
+	msg="まっくろ"             #  black
+	ret=0
+	;;
+    "01")
+	msg="palのみ設定されている"  #  only palette set
+	ret=1
+	;;
+    "10")
+	msg="palが設定されてない"   #  palette not set
+	ret=2
+	;;
+    "11")
+	msg="何か描かれている"      # something painted
+	ret=3
+	;;
 esac
 
-echo $fullpath: $msg
-
-rm $temp_beta $temp_pal
+echo "${fullpath}: ${msg}"
+exit $ret

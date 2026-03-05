@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -lt 1 ]; then
-    echo "usage:" $0 "betafile"
+    echo "Usage: $(basename "$0") betafile"
     exit
 fi
 
@@ -42,15 +42,12 @@ for file in ${fullpath}.[rR][gG][bB]; do
     esac
 done
 
-if [ $bdif -eq 0 ] && [ $pdif -eq 0 ]; then
-    msg="まっくろ"            #  black
-elif [ $bdif -eq 0 ]; then
-    msg="palのみ設定されている" #  only palette set
-elif [ $pdif -eq 0 ]; then
-    msg="palが設定されてない" #  palette not set
-else
-    msg="何か描かれている"    # something painted
-fi
+case "${bdif}${pdif}" in
+    "00") msg="まっくろ" ;;           #  black
+    "01") msg="palのみ設定されている" ;; #  only palette set
+    "10") msg="palが設定されてない" ;; #  palette not set
+    "11") msg="何か描かれている" ;;   # something painted
+esac
 
 echo $fullpath: $msg
 

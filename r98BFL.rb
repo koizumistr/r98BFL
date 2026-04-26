@@ -17,9 +17,13 @@ rescue
   File.open("#{filename}.#{ext2}", 'rb')
 end
 
-
-#p ARGV
 scale = 2
+
+
+if ARGV.length != 1
+  puts 'Usage: r98BFL YOURBETAFILE'
+  exit 1
+end
 
 base = File.basename(ARGV[0], '.*')
 dir = File.dirname(ARGV[0])
